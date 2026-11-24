@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - AntoBano</title>
+    <link rel="stylesheet" href="style.css?v=11">
+</head>
+<body class="pantalla-auth">
+
+    <div class="tarjeta-auth">
+        <div class="marca-auth">
+            <span class="insignia-marca">AntoBano</span>
+            <h1>¡Bienvenido de nuevo!</h1>
+            <p class="subtitulo-auth">Inicia sesión para hacer tu pedido</p>
+        </div>
+
+        <div id="alerta-login" class="alerta-auth" style="display: none;"></div>
+
+        <form id="form-login" onsubmit="procesarLogin(event)" novalidate>
+            <div class="grupo-campo">
+                <label for="correo">Correo electrónico</label>
+                <input type="email" id="correo" name="correo" placeholder="ejemplo@correo.com" oninput="limpiarError(this)" required>
+            </div>
+
+            <div class="grupo-campo">
+                <label for="password">Contraseña</label>
+                <div class="contenedor-pass">
+                    <input type="password" id="password" name="password" placeholder="Escribe tu contraseña" oninput="limpiarError(this)" required>
+                    <button type="button" class="btn-ojito" onclick="verPassword()" title="Mostrar u ocultar contraseña">👁️</button>
+                </div>
+            </div>
+
+            <button type="submit" id="btn-login" class="btn-principal">Iniciar sesión</button>
+
+            <div class="separador"><span>O continúa con</span></div>
+
+            <button type="button" class="btn-google" onclick="entrarConGoogle()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Logo de Google">
+                Continuar con Google
+            </button>
+
+            <p class="enlace-cambio">
+                ¿Aún no tienes cuenta? <a href="index.html">Regístrate aquí</a>
+            </p>
+        </form>
+    </div>
+
+    <script>
+        function verPassword() {
+            const inputPass = document.getElementById('password');
+            inputPass.type = (inputPass.type === 'password') ? 'text' : 'password';
+        }
+
+        function limpiarError(input) {
+            input.classList.remove('campo-error');
+        }
+
+        function mostrarNotificacionLogin(input, mensaje) {
+            const alerta = document.getElementById('alerta-login');
+            alerta.textContent = '⚠️ ' + mensaje;
+            alerta.style.display = 'block';
+            if (input) {
+                input.classList.add('campo-error');
+                input.focus();
+            }
+        }
+
+        async function procesarLogin(evento) {
+            evento.preventDefault();
+            const inputCorreo = document.getElementById('correo');
+            const inputPass = document.getElementById('password');
+            const boton = document.getElementById('btn-login');
+
+            const correo = inputCorreo.value.trim();
+            const password = inputPass.value.trim();
+            const formatoCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!formatoCorreo.test(correo)) {
+                mostrarNotificacionLogin(inputCorreo, 'Por favor, ingresa un correo electrónico válido.');
+                return;
+            }
+
+            if (password.length < 6) {
+                mostrarNotificacionLogin(inputPass, 'La contraseña debe tener al menos 6 caracteres.');
+                return;
+            }
+
+            boton.disabled = true;
+            boton.textContent = 'Verificando...';
+
+            const datos = new FormData();
+            datos.append('correo', correo);
+            datos.append('password', password);
+
+            try {
+                const respuesta = await fetch('iniciar_sesion.php', {
+                    method: 'POST',
+                    body: datos
+                });
+                const resultado = await respuesta.json();
+
+                if (resultado.ok) {
+                    document.getElementById('alerta-login').style.display = 'none';
+                    localStorage.setItem('antobano_usuario', resultado.usuario);
+                    if (resultado.rol === 'administrador') { window.location.href = 'admin.php'; } else if (resultado.rol === 'domiciliario') { window.location.href = 'repartidor.php'; } else { window.location.href = 'inicio.php'; }
+                } else {
+                    mostrarNotificacionLogin(inputPass, resultado.mensaje);
+                }
+            } catch (error) {
+                mostrarNotificacionLogin(null, 'Error al conectar con el servidor XAMPP.');
+            } finally {
+                boton.disabled = false;
+                boton.textContent = 'Iniciar sesión';
+            }
+        }
+
+        function entrarConGoogle() {
+    localStorage.setItem('antobano_usuario', 'Cliente AntoBano');
+    window.location.href = 'inicio.php';
+}
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,241 @@
+<?php
+session_name('ANTOBANO_ADMINISTRADOR'); session_start();
+require 'conexion.php';
+
+if (!isset($_SESSION['usuario']) or ($_SESSION['rol'] ?? '') !== 'administrador') {
+    header("Location: login.html");
+    exit;
+}
+
+$nombre_admin = htmlspecialchars($_SESSION['usuario']);
+$vista = ($_GET['vista'] ?? 'pedidos') === 'menu' ? 'menu' : 'pedidos';
+
+// 1. Guardar cambios en un pedido
+if ($_SERVER['REQUEST_METHOD'] === 'POST' and isset($_POST['id_pedido'])) {
+    $id_pedido = (int) $_POST['id_pedido'];
+    $nuevo_estado = $_POST['estado'] ?? 'pendiente';
+    $id_dom = ($_POST['id_domiciliario'] ?? '') !== '' ? (int) $_POST['id_domiciliario'] : null;
+
+    if ($id_dom === null) {
+        $stmtUpd = $conexion->prepare("UPDATE pedidos SET estado = ?, id_domiciliario = NULL WHERE id_pedido = ?");
+        $stmtUpd->bind_param("si", $nuevo_estado, $id_pedido);
+    } else {
+        $stmtUpd = $conexion->prepare("UPDATE pedidos SET estado = ?, id_domiciliario = ? WHERE id_pedido = ?");
+        $stmtUpd->bind_param("sii", $nuevo_estado, $id_dom, $id_pedido);
+    }
+
+    if ($stmtUpd->execute()) {
+        header("Location: admin.php?vista=pedidos&guardado=" . $id_pedido);
+        exit;
+    }
+    $stmtUpd->close();
+}
+
+// 2. Crear un plato nuevo en el menú
+if ($_SERVER['REQUEST_METHOD'] === 'POST' and ($_POST['accion_menu'] ?? '') === 'crear') {
+    $id_cat = (int) ($_POST['id_categoria'] ?? 1);
+    $nombre = trim($_POST['nombre'] ?? '');
+    $descripcion = trim($_POST['descripcion'] ?? '');
+    $precio = (float) ($_POST['precio'] ?? 0);
+    $disponible = isset($_POST['disponible']) ? 1 : 0;
+
+    if ($nombre !== '' and $precio > 0) {
+        $stmtIns = $conexion->prepare("INSERT INTO productos (id_categoria, nombre, descripcion, precio, disponible) VALUES (?, ?, ?, ?, ?)");
+        $stmtIns->bind_param("issdi", $id_cat, $nombre, $descripcion, $precio, $disponible);
+        $stmtIns->execute();
+        $stmtIns->close();
+        header("Location: admin.php?vista=menu&plato_ok=creado");
+        exit;
+    }
+}
+
+// 3. Editar un plato existente
+if ($_SERVER['REQUEST_METHOD'] === 'POST' and ($_POST['accion_menu'] ?? '') === 'editar') {
+    $id_prod = (int) ($_POST['id_producto'] ?? 0);
+    $id_cat = (int) ($_POST['id_categoria'] ?? 1);
+    $nombre = trim($_POST['nombre'] ?? '');
+    $descripcion = trim($_POST['descripcion'] ?? '');
+    $precio = (float) ($_POST['precio'] ?? 0);
+    $disponible = (int) ($_POST['disponible'] ?? 1);
+
+    if ($id_prod > 0 and $nombre !== '' and $precio > 0) {
+        $stmtEd = $conexion->prepare("UPDATE productos SET id_categoria = ?, nombre = ?, descripcion = ?, precio = ?, disponible = ? WHERE id_producto = ?");
+        $stmtEd->bind_param("issdii", $id_cat, $nombre, $descripcion, $precio, $disponible, $id_prod);
+        $stmtEd->execute();
+        $stmtEd->close();
+        header("Location: admin.php?vista=menu&plato_ok=editado");
+        exit;
+    }
+}
+
+// 4. Crear o editar una categoría
+if ($_SERVER['REQUEST_METHOD'] === 'POST' and in_array(($_POST['accion_cat'] ?? ''), ['crear_cat', 'editar_cat'], true)) {
+    $accion_cat = $_POST['accion_cat'];
+    $nombre_cat = trim($_POST['nombre_cat'] ?? '');
+    $desc_cat   = trim($_POST['descripcion_cat'] ?? '');
+    $id_cat_ed  = (int) ($_POST['id_categoria'] ?? 0);
+
+    if ($nombre_cat !== '' and ($accion_cat === 'crear_cat' or $id_cat_ed > 0)) {
+        $resultado = 'error';
+        try {
+            if ($accion_cat === 'crear_cat') {
+                $stmtCat = $conexion->prepare("INSERT INTO categorias (nombre, descripcion) VALUES (?, ?)");
+                $stmtCat->bind_param("ss", $nombre_cat, $desc_cat);
+                $okMsg = 'creada';
+            } else {
+                $stmtCat = $conexion->prepare("UPDATE categorias SET nombre = ?, descripcion = ? WHERE id_categoria = ?");
+                $stmtCat->bind_param("ssi", $nombre_cat, $desc_cat, $id_cat_ed);
+                $okMsg = 'editada';
+            }
+
+            if ($stmtCat->execute()) {
+                $resultado = 'ok';
+            } elseif ($conexion->errno === 1062) {
+                $resultado = 'duplicada';
+            }
+            $stmtCat->close();
+        } catch (mysqli_sql_exception $e) {
+            // Con PHP 8.1+ los errores de MySQL llegan como excepción
+            $resultado = ((int) $e->getCode() === 1062) ? 'duplicada' : 'error';
+        }
+
+        if ($resultado === 'ok') {
+            header("Location: admin.php?vista=menu&cat_ok=" . $okMsg);
+        } else {
+            header("Location: admin.php?vista=menu&cat_err=" . $resultado);
+        }
+        exit;
+    }
+}
+
+// Categorías desde la base de datos (reemplaza la lista fija anterior)
+$categorias = [];
+$resCat = $conexion->query("SELECT id_categoria, nombre, descripcion FROM categorias ORDER BY id_categoria ASC");
+if ($resCat) {
+    while ($c = $resCat->fetch_assoc()) {
+        $categorias[] = $c;
+    }
+}
+
+$domiciliarios = [];
+$resDom = $conexion->query("SELECT id_usuario, nombre FROM usuarios WHERE rol = 'domiciliario'");
+if ($resDom) {
+    while ($d = $resDom->fetch_assoc()) {
+        $domiciliarios[] = $d;
+    }
+}
+
+$pedidos = [];
+$resPed = $conexion->query("SELECT p.*, u.nombre AS nombre_cliente FROM pedidos p INNER JOIN usuarios u ON p.id_cliente = u.id_usuario ORDER BY p.id_pedido DESC");
+if ($resPed) {
+    while ($ped = $resPed->fetch_assoc()) {
+        $id_p = (int) $ped['id_pedido'];
+        $ped['platos'] = [];
+        $resDet = $conexion->query("SELECT d.cantidad, p.nombre FROM detalle_pedido d INNER JOIN productos p ON d.id_producto = p.id_producto WHERE d.id_pedido = $id_p");
+        while ($det = $resDet->fetch_assoc()) {
+            $ped['platos'][] = $det;
+        }
+        $pedidos[] = $ped;
+    }
+}
+
+$productos = [];
+$resProd = $conexion->query("SELECT * FROM productos ORDER BY id_categoria ASC, id_producto ASC");
+if ($resProd) {
+    while ($pr = $resProd->fetch_assoc()) {
+        $productos[] = $pr;
+    }
+}
+
+$textosEstado = [
+    'pendiente'  => '🕒 Pendiente',
+    'preparando' => '👨‍🍳 Preparando',
+    'en_camino'  => '🛵 En camino',
+    'entregado'  => '✅ Entregado',
+    'cancelado'  => '❌ Cancelado'
+];
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php if ($vista === 'pedidos'): ?>
+    <meta http-equiv="refresh" content="10">
+    <?php endif; ?>
+    <title>AntoBano - Administrador</title>
+    <link rel="stylesheet" href="style.css?v=12">
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="admin.php?vista=pedidos" class="logo">
+            <span class="icono-burger">🍔</span>
+            <h2>AntoBano Admin</h2>
+        </a>
+
+        <nav class="nav-links">
+            <a href="admin.php?vista=pedidos" class="<?php echo $vista === 'pedidos' ? 'activo' : ''; ?>">
+                Pedidos (<?php echo count($pedidos); ?>)
+            </a>
+            <a href="admin.php?vista=menu" class="<?php echo $vista === 'menu' ? 'activo' : ''; ?>">
+                Menú de Platos (<?php echo count($productos); ?>)
+            </a>
+        </nav>
+
+        <div class="menu-derecho">
+            <span class="saludo-usuario">👨‍💼 <?php echo $nombre_admin; ?></span>
+            <a href="cerrar_sesion.php" class="btn-cerrar-sesion">Cerrar Sesión</a>
+        </div>
+    </header>
+
+    <main class="contenedor-rappi">
+
+        <?php if (isset($_GET['guardado'])): ?>
+            <div style="background:#e6f9ed; color:#15803d; border:1.5px solid #bbf7d0; padding:12px 16px; border-radius:12px; margin-bottom:20px; font-weight:bold;">
+                ✅ Pedido #<?php echo (int)$_GET['guardado']; ?> actualizado correctamente.
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['plato_ok'])): ?>
+            <div style="background:#e6f9ed; color:#15803d; border:1.5px solid #bbf7d0; padding:12px 16px; border-radius:12px; margin-bottom:20px; font-weight:bold;">
+                ✅ <?php echo $_GET['plato_ok'] === 'creado' ? '¡Nuevo plato agregado al menú de clientes!' : '¡Cambios del plato guardados correctamente!'; ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['cat_ok'])): ?>
+            <div style="background:#e6f9ed; color:#15803d; border:1.5px solid #bbf7d0; padding:12px 16px; border-radius:12px; margin-bottom:20px; font-weight:bold;">
+                ✅ <?php echo $_GET['cat_ok'] === 'creada' ? '¡Nueva categoría creada correctamente!' : '¡Categoría actualizada correctamente!'; ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['cat_err'])): ?>
+            <div style="background:#fef2f2; color:#b91c1c; border:1.5px solid #fecaca; padding:12px 16px; border-radius:12px; margin-bottom:20px; font-weight:bold;">
+                ⚠️ <?php echo $_GET['cat_err'] === 'duplicada' ? 'No se pudo guardar: ya existe una categoría con ese nombre.' : 'No se pudo guardar la categoría. Inténtalo de nuevo.'; ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($vista === 'pedidos'): ?>
+            <div class="cabecera-populares">
+                <div>
+                    <h1>📋 Mostrador de Cocina y Despacho</h1>
+                    <p>Gestiona los pedidos de los clientes y asígnalos a un domiciliario.</p>
+                </div>
+                <a href="admin.php?vista=pedidos" class="btn-refrescar" style="text-decoration:none;">🔄 Actualizar pedidos</a>
+            </div>
+
+            <?php if (empty($pedidos)): ?>
+                <div class="sin-pedidos">Aún no hay pedidos registrados en la plataforma.</div>
+            <?php else: ?>
+                <div class="lista-mis-pedidos">
+                    <?php foreach ($pedidos as $ped):
+                        $est = $ped['estado'];
+                        $etiqueta = $textosEstado[$est] ?? $est;
+                    ?>
+                    <article class="tarjeta-pedido">
+                        <div class="pedido-encabezado">
+                            <div>
+                                <strong>Pedido #<?php echo (int)$ped['id_pedido']; ?> · <?php echo htmlspecialchars($ped['nombre_cliente']); ?></strong>
+                                <small>📅 <?php echo htmlspecialchars($ped['fecha_pedido']); ?></small>
+                            </div>
+                            <span class="badge-estado estado-<?php echo htmlspecialchars($est);

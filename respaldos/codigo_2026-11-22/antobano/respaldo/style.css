@@ -1,0 +1,189 @@
+body{
+    background-image: url('bg.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #ffffff;
+    text-align: center;
+    margin-top: 50px;
+    color: #1a1a1a;
+}
+h1 {
+    color: #ff6600;
+    text-shadow: -2px -2px 0 #ffffff, 2px -2px 0 #ffffff, -2px 2px 0 #ffffff, 2px 2px 0 #ffffff;
+}
+h2 {
+    color: #000000;
+    text-shadow: -2px -2px 0 #ffffff, 2px -2px 0 #ffffff, -2px 2px 0 #ffffff, 2px 2px 0 #ffffff;
+}
+form {
+    background-color: #ffffff;
+    border: 2px solid #000000;
+    padding: 30px;
+    width: 300px;
+    margin: 0 auto;
+    border-radius: 10px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1);
+}
+label {
+    display: block;
+    text-align: left;
+    margin-top: 15px;
+    font-weight: bold;
+    color:#000000
+}
+input[type="text"], input[type="email"], input[type="password"] {
+    width: 90%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ff6600;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+button {
+    background-color: #ff6600;
+    color: #ffffff;
+    padding: 12px;
+    border: 2px solid #000000;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    width: 100%;
+}
+button:hover {
+    background-color: #000000;
+    color: #ff6600;
+}
+a {
+    color: #ff6600;
+    text-decoration: none;
+    font-weight: bold;
+}
+a:hover {
+    color:#000000;
+}
+.separador {
+    text-align: center;
+    color: #757575;
+    font-weight: bold;
+    margin: 20px 0;
+}
+/* Google botón */
+.btn-google {
+    background-color: #ffffff; 
+    color: #3c4043;
+    border: 1px solid #dadce0; 
+    
+
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    
+    
+    width: 100%; 
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 0; 
+}
+.btn-google img {
+    width: 20px;
+}
+.btn-google:hover {
+    background-color: #f8f9fa;
+    color: #000000;
+    border: 1px solid #d2e3fc;
+}
+.enlace-login {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+}
+/*Diseño de la página de inicio*/
+/*Barra de navegación*/
+.navbar {
+    background-color: #ffffff;
+    padding: 10px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    margin: 20px;
+    border-radius: 50px;
+    border: 2px solid #ff6600;
+}
+.logo {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+.icono-burger {
+    font-size: 24px;
+}
+.logo h2 {
+    color: #ff6600;
+    margin: 0;
+    font-size: 22px;
+    letter-spacing: 1px;
+}
+.nav-links {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 30px;
+}
+.nav-links a {
+    color: #1a1a1a;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 1px;
+    transition: color 0.3s ease;
+}
+.nav-links a:hover {
+    color: #ff6600;
+}
+.btn-hamburgesa {
+background-color: transparent;
+    color: #ff6600;
+    font-size: 24px; 
+    border: 2px solid #ff6600; 
+    border-radius: 50%; 
+    width: 45px;
+    height: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.btn-hamburgesa:hover {
+    background-color: #ff6600; 
+    color: #ffffff;
+}
+.menu-derecho {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.btn-cerrar-sesion {
+    color: #ff6600;
+    padding: 5px 15px;
+    border: 1px solid #ff6600;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+.btn-cerrar-sesion:hover {
+    background-color: #ff6600;
+    color: #ffffff;
+}

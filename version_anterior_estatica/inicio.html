@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AntoBano - ¿Estás listo para ordenar?</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Barra de navegación superior mejorada -->
+    <header class="navbar">
+        <a href="inicio.html" class="logo">
+            <span class="icono-burger">🍔</span>
+            <h2>AntoBano</h2>
+        </a>
+
+        <nav class="nav-links" id="menu-navegacion">
+            <a href="inicio.html" class="activo">Inicio</a>
+            <a href="#restaurantes">Restaurantes</a>
+            <a href="#ofertas">Ofertas</a>
+            <a href="#pedidos">Pedidos</a>
+        </nav>
+
+        <div class="menu-derecho">
+            <span class="saludo-usuario" id="saludo-usuario">Hola, Invitado</span>
+            <button type="button" class="btn-carrito-nav" onclick="alert('Aquí abriremos tu carrito de compras')">
+                🛒 <span id="contador-carrito">0</span>
+            </button>
+            <button type="button" class="btn-hamburgesa" onclick="alternarMenuMovil()" title="Abrir menú">☰</button>
+            <a href="login.html" class="btn-cerrar-sesion" onclick="cerrarSesion()">Cerrar Sesión</a>
+        </div>
+    </header>
+
+    <!-- Contenedor principal con fondo blanco suave para que se lea perfecto -->
+    <main class="contenedor-principal">
+        <div class="encabezado-seccion">
+            <h1 id="restaurantes">Restaurantes Populares</h1>
+            <p>Elige tu favorito y pídelo directo a la puerta de tu casa</p>
+        </div>
+    </main>
+
+    <script>
+        // Carga el nombre guardado cuando iniciaste sesión en login.html
+        const usuarioGuardado = localStorage.getItem('antobano_usuario');
+        if (usuarioGuardado) {
+            document.getElementById('saludo-usuario').textContent = 'Hola, ' + usuarioGuardado;
+        }
+
+        // Muestra u oculta los enlaces cuando la pantalla es de celular
+        function alternarMenuMovil() {
+            const menu = document.getElementById('menu-navegacion');
+            menu.classList.toggle('mostrar-movil');
+        }
+
+        // Limpia la sesión al salir
+        function cerrarSesion() {
+            localStorage.removeItem('antobano_usuario');
+        }
+    </script>
+
+</body>
+</html>

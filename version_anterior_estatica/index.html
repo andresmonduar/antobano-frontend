@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - AntoBano</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="pantalla-auth">
+
+    <div class="tarjeta-auth">
+        <div class="marca-auth">
+            <span class="insignia-marca">AntoBano Delivery</span>
+            <h1>¡Bienvenidos a AntoBano!</h1>
+            <p class="subtitulo-auth">Regístrate para ordenar tu comida favorita</p>
+        </div>
+
+        <!-- Notificación roja de error -->
+        <div id="alerta-registro" class="alerta-auth" style="display: none;"></div>
+
+        <form id="form-registro" onsubmit="procesarRegistro(event)" novalidate>
+            <div class="grupo-campo">
+                <label for="nombre">Nombre</label>
+                <input type="text" id="nombre" placeholder="Ej. Andrés" oninput="limpiarError(this)" required>
+            </div>
+
+            <div class="grupo-campo">
+                <label for="apellido">Apellido</label>
+                <input type="text" id="apellido" placeholder="Ej. Moncada" oninput="limpiarError(this)" required>
+            </div>
+
+            <div class="grupo-campo">
+                <label for="correo">Correo electrónico</label>
+                <input type="email" id="correo" placeholder="ejemplo@correo.com" oninput="limpiarError(this)" required>
+            </div>
+
+            <div class="grupo-campo">
+                <label for="password">Contraseña</label>
+                <div class="contenedor-pass">
+                    <input type="password" id="password" placeholder="Mínimo 6 caracteres" oninput="limpiarError(this)" required>
+                    <button type="button" class="btn-ojito" onclick="verPasswordRegistro()" title="Mostrar u ocultar contraseña">👁️</button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-principal">Registrarse</button>
+
+            <div class="separador"><span>O regístrate con</span></div>
+
+            <button type="button" class="btn-google" onclick="registrarConGoogle()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Logo de Google">
+                Regístrate con Google
+            </button>
+
+            <p class="enlace-cambio">
+                ¿Ya tienes una cuenta? <a href="login.html">Inicia sesión</a>
+            </p>
+        </form>
+    </div>
+
+    <script>
+        function verPasswordRegistro() {
+            const inputPass = document.getElementById('password');
+            inputPass.type = (inputPass.type === 'password') ? 'text' : 'password';
+        }
+
+        // Quita el borde rojo apenas el usuario empieza a corregir el texto
+        function limpiarError(input) {
+            input.classList.remove('campo-error');
+        }
+
+        // Muestra la notificación roja y marca el cuadro con error
+        function mostrarNotificacion(input, mensaje) {
+            const alerta = document.getElementById('alerta-registro');
+            alerta.textContent = '⚠️ ' + mensaje;
+            alerta.style.display = 'block';
+            if (input) {
+                input.classList.add('campo-error');
+                input.focus();
+            }
+        }
+
+        function procesarRegistro(evento) {
+            evento.preventDefault();
+            const inputNombre = document.getElementById('nombre');
+            const inputApellido = document.getElementById('apellido');
+            const inputCorreo = document.getElementById('correo');
+            const inputPass = document.getElementById('password');
+
+            const nombre = inputNombre.value.trim();
+            const apellido = inputApellido.value.trim();
+            const correo = inputCorreo.value.trim();
+            const password = inputPass.value.trim();
+
+            // Regla que solo permite letras y espacios (bloquea números y símbolos como @#%)
+            const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+            // Regla para verificar que el correo tenga @ y un dominio válido
+            const formatoCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (nombre.length < 3) {
+                mostrarNotificacion(inputNombre, 'El nombre debe tener al menos 3 letras.');
+                return;
+            }
+            if (!soloLetras.test(nombre)) {
+                mostrarNotificacion(inputNombre, 'El nombre no puede llevar números ni símbolos (ej. @#%).');
+                return;
+            }
+
+            if (apellido.length < 3) {
+                mostrarNotificacion(inputApellido, 'El apellido debe tener al menos 3 letras.');
+                return;
+            }
+            if (!soloLetras.test(apellido)) {
+                mostrarNotificacion(inputApellido, 'El apellido no puede llevar números ni símbolos.');
+                return;
+            }
+
+            if (!formatoCorreo.test(correo)) {
+                mostrarNotificacion(inputCorreo, 'Escribe un correo válido (ejemplo: usuario@gmail.com).');
+                return;
+            }
+
+            if (password.length < 6) {
+                mostrarNotificacion(inputPass, 'La contraseña debe tener mínimo 6 caracteres.');
+                return;
+            }
+
+            document.getElementById('alerta-registro').style.display = 'none';
+            localStorage.setItem('antobano_usuario', nombre + ' ' + apellido);
+            window.location.href = 'inicio.html';
+        }
+
+        function registrarConGoogle() {
+            localStorage.setItem('antobano_usuario', 'Usuario Google');
+            window.location.href = 'inicio.html';
+        }
+    </script>
+
+</body>
+</html>
