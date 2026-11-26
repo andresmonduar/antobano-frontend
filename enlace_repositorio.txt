@@ -1,4 +1,4 @@
 Proyecto: Plataforma Web de Comidas Rápidas a Domicilio - AntoBano
 Aprendiz: Andres Santiago Moncada Duarte
 Evidencia: AA4-EV03 - Componente front-end del proyecto formativo
-Enlace del repositorio GitHub: https://github.com/TU_USUARIO/antobano-frontend
+Enlace del repositorio GitHub: https://github.com/andresmonduar/antobano-frontend
